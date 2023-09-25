@@ -91,10 +91,11 @@ typedef struct {
   Queue_T* draw_queues[DRAW_QUEUE_SIZE];
 } Scene_T;
 
+void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_e type, AssetRedrawCallback_T redraw, AssetDrawCallback_T draw);
 Scene_T* Assets_SetupScene(void);
 void Assets_Draw(const char* name, Scene_T* scene, AssetDraw_Opts_T opts);
 bool Assets_PromptRedraw(Scene_T* scene, clock_t ms);
-void Assets_LoadFile(const char* fname, AssetType_e type, Scene_T* scene);
+void* Assets_LoadFile(const char* fname, AssetType_e type, Scene_T* scene);
 void Assets_FlipDrawQueue(Scene_T* scene);
 void Assets_ClearDrawQueue(Scene_T* scene);
 

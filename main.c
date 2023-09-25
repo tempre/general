@@ -308,10 +308,10 @@ static void opengl_init(int argc, char** argv)
 {
     GL_Window.scene = Assets_SetupScene();
 
-    Assets_LoadFile(ASSET_CAT_GIF, ASSET_GIF, GL_Window.scene);
-    Assets_LoadFile(ASSET_GIPHY_GIF, ASSET_GIF, GL_Window.scene);
-    Assets_LoadFile(ASSET_PENG_GIF, ASSET_GIF, GL_Window.scene);
-    Assets_LoadFile(ASSET_KIKI_PNG, ASSET_IMAGE, GL_Window.scene);
+    (void)Assets_LoadFile(ASSET_CAT_GIF, ASSET_GIF, GL_Window.scene);
+    (void)Assets_LoadFile(ASSET_GIPHY_GIF, ASSET_GIF, GL_Window.scene);
+    (void)Assets_LoadFile(ASSET_PENG_GIF, ASSET_GIF, GL_Window.scene);
+    (void)Assets_LoadFile(ASSET_KIKI_PNG, ASSET_IMAGE, GL_Window.scene);
 
     GL_Window.start_time = clock();
 
