@@ -15,9 +15,17 @@ typedef struct {
 
     Image_T* img;
 
-    bool is_trimmed;
     U8 trimmed[((VISIBLE_ASCII_HIGH - VISIBLE_ASCII_LOW) + 1u) * 2u];
 } Charmap_T;
+
+typedef struct {
+    bool draw_trimmed;
+    bool draw_all;
+    union {
+        const uchar* text;
+        uchar c;
+     };
+} CharmapDraw_Opts_T;
 
 void Charmap_Setup(Scene_T* scene, const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row);
 void Charmap_CalcTrueWidth(Charmap_T* c);

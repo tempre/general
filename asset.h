@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "q.h"
+#include "hash.h"
 
 #define ASSET_GIPHY_GIF        "giphy.gif"
 #define ASSET_CAT_GIF          "cat.gif"
@@ -43,6 +44,7 @@ typedef enum {
 typedef enum {
     ASSET_IMAGE,
     ASSET_GIF,
+    ASSET_CHARMAP,
 } AssetType_e;
 
 typedef bool (*AssetRedrawCallback_T)(clock_t ms, void* opts);
@@ -65,8 +67,7 @@ typedef struct {
     U16 off_x;
     U16 off_y;
 
-    /* GIF */
-    U16 gif_speed;
+    void* extra;
 } AssetDraw_Opts_T;
 
 typedef struct {
@@ -85,7 +86,7 @@ typedef struct {
 } AssetDraw_T;
 
 typedef struct {
-  Assets_T* assets;
+  HashTable_T* table;
 
   U8 current_draw_queue;
   Queue_T* draw_queues[DRAW_QUEUE_SIZE];
@@ -95,8 +96,11 @@ void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_
 Scene_T* Assets_SetupScene(void);
 void Assets_Draw(const char* name, Scene_T* scene, AssetDraw_Opts_T opts);
 bool Assets_PromptRedraw(Scene_T* scene, clock_t ms);
-void* Assets_LoadFile(const char* fname, AssetType_e type, Scene_T* scene);
+void Assets_Load(const char* fname, AssetType_e type, Scene_T* scene);
 void Assets_FlipDrawQueue(Scene_T* scene);
 void Assets_ClearDrawQueue(Scene_T* scene);
+
+Image_T* Assets_LoadImage(Scene_T* scene, const char* fname);
+GIF_T* Assets_LoadGIF(Scene_T* scene, const char* fname);
 
 #endif // ASSET_H_

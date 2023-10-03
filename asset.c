@@ -15,7 +15,7 @@
 #include "stb_image.h"
 
 /* IMAGE HANDLING */
-static void draw_image(void* opt)
+void draw_image(void* opt)
 {
     AssetDraw_T* opts = (AssetDraw_T*)opt;
     Assets_T* a = (Assets_T*)opts->asset;
@@ -34,25 +34,6 @@ static bool redraw_image(clock_t ms, void* opts)
     return false;
 }
 
-static Image_T* load_image(Scene_T* scene, const char* fname)
-{
-    Image_T* img = malloc(sizeof(Image_T));
-    stbi_set_flip_vertically_on_load(true);
-    img->pixel_map = stbi_load(fname, &img->width, &img->height, &img->channels, STBI_rgb_alpha);
-
-    if(img->pixel_map == NULL)
-    {
-        stbi_image_free(img->pixel_map);
-        free(img);
-        img = NULL;
-    }
-    else
-    {
-        Assets_AddToScene(scene, (void*)img, fname, ASSET_IMAGE, redraw_image, draw_image);
-    }
-    return img;
-}
-
 /* GIF HANDLING */
 static bool gif_redraw(clock_t ms, void* opts)
 {
@@ -60,18 +41,19 @@ static bool gif_redraw(clock_t ms, void* opts)
     AssetDraw_T* op = (AssetDraw_T*)opts;
     Assets_T* asset = (Assets_T*)op->asset;
     GIF_T* gif = (GIF_T*)asset->asset;
+    U16* gif_speed = (U16*)op->options.extra;
 
     if(gif)
     {
         op->status.last_ms += ms;
         U16 delay = 0u;
-        if(op->options.gif_speed < GIF_PLAYBACK_SPD_1X)
+        if(*gif_speed < GIF_PLAYBACK_SPD_1X)
         {
-            delay = gif->delays[op->status.gif_frame % gif->frames] * op->options.gif_speed;
+            delay = gif->delays[op->status.gif_frame % gif->frames] * *gif_speed;
         }
         else
         {
-            delay = (U16)((float)gif->delays[op->status.gif_frame % gif->frames] / MAX(0.0f, (op->options.gif_speed / 100.f)));
+            delay = (U16)((float)gif->delays[op->status.gif_frame % gif->frames] / MAX(0.0f, (*gif_speed / 100.f)));
         }
 
         if(op->status.last_ms > delay)
@@ -102,7 +84,134 @@ static void draw_gif(void* opts)
     }
 }
 
-static GIF_T* load_gif(Scene_T* scene, const char* fname)
+void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_e type, AssetRedrawCallback_T redraw, AssetDrawCallback_T draw)
+{
+    Assets_T* a = malloc(sizeof(Assets_T));
+    a->asset = asset;
+    a->type = type;
+
+    a->redraw = redraw;
+    a->draw = draw;
+
+    char* s = basename(name);
+    a->name = malloc(strlen(s) + 1u);
+    strcpy(a->name, s);
+
+    HT_Insert(scene->table, s, a);
+}
+
+Scene_T* Assets_SetupScene(void)
+{
+    Scene_T* scene = malloc(sizeof(Scene_T));
+    scene->draw_queues[0u] = create_queue();
+    scene->draw_queues[1u] = create_queue();
+    scene->current_draw_queue = 0u;
+    scene->table = malloc(sizeof(HashTable_T));
+    return scene;
+}
+
+void Assets_Draw(const char* name, Scene_T* scene, AssetDraw_Opts_T opts)
+{
+    if(scene->table != NULL)
+    {
+        Assets_T* asset = (Assets_T*)HT_Get(scene->table, name);
+        if(asset != NULL)
+        {
+            AssetDraw_T* d = (AssetDraw_T*)front(scene->draw_queues[scene->current_draw_queue ^ 1u]);
+            if((d != NULL) &&
+            (memcmp(d->asset, asset, sizeof(Assets_T)) == 0))
+            {
+                d = (AssetDraw_T*)dequeue(scene->draw_queues[scene->current_draw_queue ^ 1u]);
+            }
+            else
+            {
+                d = malloc(sizeof(AssetDraw_T));
+                d->asset = asset;
+                d->options = opts;
+            }
+
+            /* adjust the position if required per redraw */
+            d->options.off_x = opts.off_x;
+            d->options.off_y = opts.off_y;
+
+            /* actually draw */
+            asset->draw(d);
+            enqueue(scene->draw_queues[scene->current_draw_queue], d);
+        }
+        else
+        {
+            AX_DEBUG("asset not loaded.. (should add some hot loading here)");
+        }
+    }
+}
+
+bool Assets_PromptRedraw(Scene_T* scene, clock_t ms)
+{
+    bool redraw = false;
+    AssetDraw_T* e = NULL;
+
+    U8 pos = 0u;
+    while((e = (AssetDraw_T*)peek(scene->draw_queues[scene->current_draw_queue], pos)) != NULL)
+    {
+        redraw = e->asset->redraw(ms, e) || redraw;
+        ++pos;
+    }
+
+    return redraw;
+}
+
+
+void Assets_Load(const char* fname, AssetType_e type, Scene_T* scene)
+{
+    switch(type)
+    {
+        case ASSET_IMAGE:
+        {
+            Assets_AddToScene(scene, (void*)Assets_LoadImage(scene, fname), fname, type, redraw_image, draw_image);
+            break;
+        }
+
+        case ASSET_GIF:
+        {
+            Assets_AddToScene(scene, (void*)Assets_LoadGIF(scene, fname), fname, type, gif_redraw, draw_gif);
+            break;
+        }
+
+        default:
+            break;
+    }
+}
+
+void Assets_FlipDrawQueue(Scene_T* scene)
+{
+    scene->current_draw_queue ^= 1u;
+}
+
+void Assets_ClearDrawQueue(Scene_T* scene)
+{
+    AssetDraw_T* d = NULL;
+    while((d = dequeue(scene->draw_queues[scene->current_draw_queue])) != NULL)
+    {
+        free(d);
+    }
+}
+
+Image_T* Assets_LoadImage(Scene_T* scene, const char* fname)
+{
+    Image_T* img = malloc(sizeof(Image_T));
+    stbi_set_flip_vertically_on_load(true);
+    img->pixel_map = stbi_load(fname, &img->width, &img->height, &img->channels, STBI_rgb_alpha);
+
+    if(img->pixel_map == NULL)
+    {
+        stbi_image_free(img->pixel_map);
+        free(img);
+        img = NULL;
+    }
+    return img;
+}
+
+GIF_T* Assets_LoadGIF(Scene_T* scene, const char* fname)
 {
     GIF_T* gif = malloc(sizeof(GIF_T));
     FILE* f = fopen(fname, "rb");
@@ -127,10 +236,6 @@ static GIF_T* load_gif(Scene_T* scene, const char* fname)
             free(gif);
             gif = NULL;
         }
-        else
-        {
-            Assets_AddToScene(scene, (void*)gif, fname, ASSET_GIF, gif_redraw, draw_gif);
-        }
     }
     else
     {
@@ -138,122 +243,4 @@ static GIF_T* load_gif(Scene_T* scene, const char* fname)
         gif = NULL;
     }
     return gif;
-}
-
-void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_e type, AssetRedrawCallback_T redraw, AssetDrawCallback_T draw)
-{
-    Assets_T* a = malloc(sizeof(Assets_T));
-    a->asset = asset;
-    a->type = type;
-
-    a->next = NULL;
-    a->prev = scene->assets;
-
-    a->redraw = redraw;
-    a->draw = draw;
-
-    char* s = basename(name);
-    a->name = malloc(strlen(s) + 1u);
-    strcpy(a->name, s);
-
-    scene->assets = a;
-}
-
-Scene_T* Assets_SetupScene(void)
-{
-    Scene_T* scene = malloc(sizeof(Scene_T));
-    scene->draw_queues[0u] = create_queue();
-    scene->draw_queues[1u] = create_queue();
-    scene->current_draw_queue = 0u;
-    scene->assets = NULL;
-    return scene;
-}
-
-void Assets_Draw(const char* name, Scene_T* scene, AssetDraw_Opts_T opts)
-{
-    if(scene->assets != NULL)
-    {
-        Assets_T* a = scene->assets;
-        while(a != NULL)
-        {
-            if((strcmp(name, a->name) == 0))
-            {
-                AssetDraw_T* d = (AssetDraw_T*)front(scene->draw_queues[scene->current_draw_queue ^ 1u]);
-                if((d != NULL) &&
-                  (memcmp(d->asset, a, sizeof(Assets_T)) == 0))
-                {
-                    d = (AssetDraw_T*)dequeue(scene->draw_queues[scene->current_draw_queue ^ 1u]);
-                }
-                else
-                {
-                    d = malloc(sizeof(AssetDraw_T));
-                    d->asset = a;
-                    d->options = opts;
-                }
-                a->draw(d);
-                enqueue(scene->draw_queues[scene->current_draw_queue], d);
-                break;
-            }
-            a = a->prev;
-        }
-
-        if(a == NULL)
-        {
-            AX_DEBUG("asset not loaded.. (should add some hot loading here)");
-            assert(false);
-        }
-    }
-}
-
-bool Assets_PromptRedraw(Scene_T* scene, clock_t ms)
-{
-    bool redraw = false;
-    AssetDraw_T* e = NULL;
-
-    U8 pos = 0u;
-    while((e = (AssetDraw_T*)peek(scene->draw_queues[scene->current_draw_queue], pos)) != NULL)
-    {
-        redraw = e->asset->redraw(ms, e) || redraw;
-        ++pos;
-    }
-
-    return redraw;
-}
-
-
-void* Assets_LoadFile(const char* fname, AssetType_e type, Scene_T* scene)
-{
-    void* ret = NULL;
-    switch(type)
-    {
-        case ASSET_IMAGE:
-        {
-            ret = load_image(scene, fname);
-            break;
-        }
-
-        case ASSET_GIF:
-        {
-            ret = load_gif(scene, fname);
-            break;
-        }
-
-        default:
-            break;
-    }
-    return ret;
-}
-
-void Assets_FlipDrawQueue(Scene_T* scene)
-{
-    scene->current_draw_queue ^= 1u;
-}
-
-void Assets_ClearDrawQueue(Scene_T* scene)
-{
-    AssetDraw_T* d = NULL;
-    while((d = dequeue(scene->draw_queues[scene->current_draw_queue])) != NULL)
-    {
-        free(d);
-    }
 }

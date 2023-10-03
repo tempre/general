@@ -250,18 +250,29 @@ static void opengl_loop(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    /*
+     * The general idea is there are two draw buffers old and new.
+     * Some file types build off the previous draw call such as gifs, since we track the current frame position per each draw call.
+     * Others don't care such as images, these typically don't store any overhead data between draw queues.
+     *
+     * Things such as the offset of each asset may change per draw call as well to support coded movements
+     * @example
+     * [ gif (frame 0 / 4), image, gif (frame 4 / 4) ] :: old
+     * [ gif (frame 1 / 4), image, gif (frame 0 / 4 ) ] :: new
+     */
+
     Assets_FlipDrawQueue(GL_Window.scene);
     Assets_ClearDrawQueue(GL_Window.scene);
 
-    Assets_Draw(ASSET_KIKI_PNG, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200});
-    Assets_Draw(ASSET_CAT_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 500, .gif_speed = GIF_PLAYBACK_SPD_1X});
+    static uint16_t speeds[] = {GIF_PLAYBACK_SPD_1X, GIF_PLAYBACK_SPD_3X, GIF_PLAYBACK_SPD_HALF, GIF_PLAYBACK_SPD_EIGHTH};
 
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 500, .gif_speed = GIF_PLAYBACK_SPD_1X});
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 500, .gif_speed = GIF_PLAYBACK_SPD_3X});
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200, .gif_speed = GIF_PLAYBACK_SPD_HALF});
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 200, .gif_speed = GIF_PLAYBACK_SPD_EIGHTH});
+    Assets_Draw(ASSET_KIKI_PNG, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 200});
+    Assets_Draw(ASSET_CAT_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 500, .extra = &speeds[0u]});
 
-    Assets_Draw(ASSET_PENG_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200, .gif_speed = GIF_PLAYBACK_SPD_1X});
+    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 500, .extra = &speeds[0u]});
+    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 500, .extra = &speeds[1u]});
+    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200, .extra = &speeds[2u]});
+    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 200, .extra = &speeds[3u]});
 
     glutSwapBuffers();
     glFlush();
@@ -308,10 +319,10 @@ static void opengl_init(int argc, char** argv)
 {
     GL_Window.scene = Assets_SetupScene();
 
-    (void)Assets_LoadFile(ASSET_CAT_GIF, ASSET_GIF, GL_Window.scene);
-    (void)Assets_LoadFile(ASSET_GIPHY_GIF, ASSET_GIF, GL_Window.scene);
-    (void)Assets_LoadFile(ASSET_PENG_GIF, ASSET_GIF, GL_Window.scene);
-    (void)Assets_LoadFile(ASSET_KIKI_PNG, ASSET_IMAGE, GL_Window.scene);
+    Assets_Load(ASSET_CAT_GIF, ASSET_GIF, GL_Window.scene);
+    Assets_Load(ASSET_GIPHY_GIF, ASSET_GIF, GL_Window.scene);
+    Assets_Load(ASSET_PENG_GIF, ASSET_GIF, GL_Window.scene);
+    Assets_Load(ASSET_KIKI_PNG, ASSET_IMAGE, GL_Window.scene);
 
     GL_Window.start_time = clock();
 
