@@ -9,9 +9,15 @@
 *  1. make it []
 */
 
+/* STB image defn */
+#define STB_IMAGE_IMPLEMENTATION
+
 /* Custom includes */
 #include "common.h"
 #include "asset.h"
+#include "charmap.h"
+#include "gif.h"
+#include "image.h"
 
 /* OpenGL includes */
 #include "GL/gl.h"
@@ -21,9 +27,6 @@
 #include <float.h>
 #include <string.h>
 #include <time.h>
-
-#define VISIBLE_ASCII_LOW 33u
-#define VISIBLE_ASCII_HIGH 127u
 
 /* typedef struct { */
 /*     const char* file; */
@@ -265,6 +268,7 @@ static void opengl_loop(void)
     Assets_ClearDrawQueue(GL_Window.scene);
 
     static uint16_t speeds[] = {GIF_PLAYBACK_SPD_1X, GIF_PLAYBACK_SPD_3X, GIF_PLAYBACK_SPD_HALF, GIF_PLAYBACK_SPD_EIGHTH};
+    static CharmapDraw_Opts_T cm_opts = { .draw_trimmed = false, .draw_all = false, .text = NULL, .c = 'B'};
 
     Assets_Draw(ASSET_KIKI_PNG, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 200});
     Assets_Draw(ASSET_CAT_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 500, .extra = &speeds[0u]});
@@ -273,6 +277,7 @@ static void opengl_loop(void)
     Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 500, .extra = &speeds[1u]});
     Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200, .extra = &speeds[2u]});
     Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 200, .extra = &speeds[3u]});
+    Assets_Draw(CHARMAP_DEFAULT, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 950, .off_y = 200, .extra = &cm_opts});
 
     glutSwapBuffers();
     glFlush();
@@ -323,6 +328,7 @@ static void opengl_init(int argc, char** argv)
     Assets_Load(ASSET_GIPHY_GIF, ASSET_GIF, GL_Window.scene);
     Assets_Load(ASSET_PENG_GIF, ASSET_GIF, GL_Window.scene);
     Assets_Load(ASSET_KIKI_PNG, ASSET_IMAGE, GL_Window.scene);
+    Charmap_Load(CHARMAP_DEFAULT, 32u, 3u, 32u, GL_Window.scene);
 
     GL_Window.start_time = clock();
 

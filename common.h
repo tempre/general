@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <assert.h>
 
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+#define STBI_ONLY_GIF
+#include "stb_image.h"
+
 typedef uint8_t U8;
 typedef uint16_t U16;
 typedef uint32_t U32;

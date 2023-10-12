@@ -9,6 +9,7 @@
 
 static void find_true_width(Charmap_T* cm)
 {
+    /* @TODO this function cause a seg fault sometimes */
     memset(cm->trimmed, (cm->glyph_w / 2u), ((VISIBLE_ASCII_HIGH - VISIBLE_ASCII_LOW) + 1u) * 2u);
     /** @TODO verify visible low & high is present in provided charmap */
     for(U8 c = VISIBLE_ASCII_LOW; c < VISIBLE_ASCII_HIGH; ++c)
@@ -65,55 +66,65 @@ static void find_true_width(Charmap_T* cm)
 * @params c --> character to darw
 * @params trim --> whether to draw the trimmed character or not
 */
-static void draw_char(Charmap_T* cm, AssetDraw_Opts_T* opts, uchar c, bool trim)
+static void draw_char(AssetDraw_T* draw, uchar c)
 {
-    uchar real_c = (c - cm->start_ascii);
+    Assets_T* a = (Assets_T*)draw->asset;
+    Charmap_T* cm = (Charmap_T*)a->asset;
+    CharmapDraw_Opts_T* cm_opts = (CharmapDraw_Opts_T*)draw->options.extra;
 
-    U16 row = (real_c / cm->glyphs_per_row);
-    U16 col = (real_c % cm->glyphs_per_row);
+    if(cm->img && cm->img->pixel_map)
+    {
+        uchar real_c = (c - cm->start_ascii);
 
-    U32 h_off = (row * cm->glyph_h) * (cm->img->width * cm->img->channels);
-    U32 w_off = (col * cm->glyph_w) * cm->img->channels;
-    uchar* soff = cm->img->pixel_map + (h_off + w_off);
+        U16 row = (real_c / cm->glyphs_per_row);
+        U16 col = (real_c % cm->glyphs_per_row);
 
-    U8 trimmed_idx = ((c - VISIBLE_ASCII_LOW) * 2u);
+        U32 h_off = (row * cm->glyph_h) * (cm->img->width * cm->img->channels);
+        U32 w_off = (col * cm->glyph_w) * cm->img->channels;
+        uchar* soff = cm->img->pixel_map + (h_off + w_off);
 
-    U32 w_end_sub = (trim) ? cm->trimmed[trimmed_idx + 1u] : 0u;
-    uchar* offset = soff + (((trim) ? cm->trimmed[trimmed_idx] : 0u) * cm->img->channels);
+        U8 trimmed_idx = ((c - VISIBLE_ASCII_LOW) * 2u);
 
-    U32 width = (cm->glyph_w - w_end_sub);
-    U32 height = cm->glyph_h;
+        U8 w_end_sub = (cm_opts->draw_trimmed) ? cm->trimmed[trimmed_idx + 1u] : 0u;
+        uchar* offset = soff + (((cm_opts->draw_trimmed) ? cm->trimmed[trimmed_idx] : 0u) * cm->img->channels);
 
-    glRasterPos2i(100, 400);
-    glDrawPixels(cm->glyph_w, cm->glyph_h, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, offset);
+
+        /* for(uint8_t y = 0u; y < cm->glyph_h; ++y) */
+        /* { */
+        glRasterPos2i(draw->options.off_x, draw->options.off_y);
+        glDrawPixels(cm->glyph_w, cm->glyph_h, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, offset);
+        /*     offset += w_off; */
+        /* } */
+    }
 }
 
 /**
-* DRAW_STRING
+* draw_STRING
 * @params str --> string to draw
 * @params off_x --> X offset onto the screen
 * @params off_y --> Y offset onto the screen
 * @params scale_x --> (0 - MAX_CHAR_SCALE_FACTOR_HUNDRETHS_X)
 * @params scale_y --> (0 - MAX_CHAR_SCALE_FACTOR_HUNDRETHS_Y)
 */
-static void draw_string(Charmap_T* cm, AssetDraw_Opts_T* opts, bool trimmed)
+static void draw_string(AssetDraw_T* draw)
 {
-    CharmapDraw_Opts_T* cm_opts = (CharmapDraw_Opts_T*)opts->extra;
-    U32 x = opts->off_x;
-    U32 y = opts->off_y;
+    CharmapDraw_Opts_T* cm_opts = (CharmapDraw_Opts_T*)draw->options.extra;
+    Charmap_T* cm = (Charmap_T*)draw->asset;
+    U32 x = draw->options.off_x;
+    U32 y = draw->options.off_y;
     for(U16 i = 0u; cm_opts->text[i] != 0; ++i)
     {
         if(cm_opts->text[i] == 10)
         {
             y -= cm->glyph_h;
-            x = opts->off_x;
+            x = draw->options.off_x;
         }
         else
         {
             if(cm_opts->text[i] < ((cm->glyphs_per_row * cm->max_rows) + cm->start_ascii) && (cm_opts->text[i] > cm->start_ascii))
             {
-                draw_char(cm, opts, cm_opts->text[i], trimmed);
-                if(trimmed)
+                draw_char(draw, cm_opts->text[i]);
+                if(cm_opts->draw_trimmed)
                 {
                     U8 trimmed_idx = ((cm_opts->text[i] - VISIBLE_ASCII_LOW) * 2u);
                     x += (cm->glyph_w - cm->trimmed[trimmed_idx + 1u]);
@@ -131,13 +142,12 @@ static void draw_string(Charmap_T* cm, AssetDraw_Opts_T* opts, bool trimmed)
     }
 }
 
-static void draw_full_charmap(void* opt)
+static void draw_full_charmap(AssetDraw_T* opts)
 {
-    AssetDraw_T* opts = (AssetDraw_T*)opt;
     Assets_T* a = (Assets_T*)opts->asset;
     Charmap_T* cm = (Charmap_T*)a->asset;
 
-    if(cm->img)
+    if(cm->img && cm->img->pixel_map)
     {
         glRasterPos2i(opts->options.off_x, opts->options.off_y);
         glDrawPixels(cm->img->width, cm->img->height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, cm->img->pixel_map);
@@ -155,7 +165,6 @@ static void charmap_draw(void* opt)
 {
     AssetDraw_T* draw = (AssetDraw_T*)opt;
     CharmapDraw_Opts_T* cm_opts = (CharmapDraw_Opts_T*)draw->options.extra;
-    Charmap_T* cm = (Charmap_T*)draw->asset;
 
     if(cm_opts->draw_all)
     {
@@ -163,18 +172,18 @@ static void charmap_draw(void* opt)
     }
     else
     {
-        if(cm_opts->text == NULL)
+        if(!cm_opts->text)
         {
-            draw_char(cm, &draw->options, cm_opts->c, cm_opts->draw_trimmed);
+            draw_char(draw, cm_opts->c);
         }
         else
         {
-            draw_string(cm, &draw->options, cm_opts->draw_trimmed);
+            draw_string(draw);
         }
     }
 }
 
-void Charmap_Setup(Scene_T* scene, const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row)
+void Charmap_Load(const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row, Scene_T* scene)
 {
     Charmap_T* charmap = malloc(sizeof(Charmap_T));
     charmap->start_ascii = start_ascii;
@@ -187,7 +196,7 @@ void Charmap_Setup(Scene_T* scene, const char* fname, U8 start_ascii, U8 max_row
     charmap->glyph_w = (charmap->img->width / charmap->glyphs_per_row);
     charmap->glyph_h = (charmap->img->height / charmap->max_rows);
 
-    find_true_width(charmap);
+    /* find_true_width(charmap); */
 
     Assets_AddToScene(scene, (void*)charmap, fname, ASSET_CHARMAP, charmap_redraw, charmap_draw);
 }
