@@ -87,28 +87,6 @@ bool Assets_PromptRedraw(Scene_T* scene, clock_t ms)
     return redraw;
 }
 
-
-void Assets_Load(const char* fname, AssetType_e type, Scene_T* scene)
-{
-    switch(type)
-    {
-        case ASSET_IMAGE:
-        {
-            Assets_AddToScene(scene, (void*)Assets_LoadImage(scene, fname), fname, type, Assets_RedrawImage, Assets_DrawImage);
-            break;
-        }
-
-        case ASSET_GIF:
-        {
-            Assets_AddToScene(scene, (void*)Assets_LoadGIF(scene, fname), fname, type, Assets_RedrawGIF, Assets_DrawGIF);
-            break;
-        }
-
-        default:
-            break;
-    }
-}
-
 void Assets_FlipDrawQueue(Scene_T* scene)
 {
     scene->current_draw_queue ^= 1u;

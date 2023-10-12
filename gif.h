@@ -17,6 +17,11 @@ typedef struct {
     int file_size;
 } GIF_T;
 
+typedef struct {
+    U16 speed;
+    U16 gif_frame;
+} GIF_DrawOpts_T;
+
 typedef enum {
     GIF_PLAYBACK_SPD_EIGHTH = 8u,
     GIF_PLAYBACK_SPD_FOURTH = 4u,
@@ -27,8 +32,6 @@ typedef enum {
 } GIF_PLAYBACK_SPEED_e;
 
 
-GIF_T* Assets_LoadGIF(Scene_T* scene, const char* fname);
-bool Assets_RedrawGIF(clock_t ms, void* opts);
-void Assets_DrawGIF(void* opts);
+GIF_T* Assets_LoadGIF(const char* fname, Scene_T* scene);
 
 #endif // GIF_H_

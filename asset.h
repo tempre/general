@@ -9,6 +9,7 @@
 #define ASSET_CAT_GIF          "cat.gif"
 #define ASSET_KIKI_PNG         "kiki.png"
 #define ASSET_PENG_GIF         "peng.gif"
+#define ASSET_TEST_GIF         "test.gif"
 
 #define NUMBER_OF_DRAW_QUEUES 2u
 
@@ -42,6 +43,7 @@ typedef struct {
 } AssetDraw_Opts_T;
 
 typedef struct {
+    U16 frame;
     clock_t last_ms;
 } AssetDraw_Status_T;
 
@@ -61,11 +63,12 @@ typedef struct {
   Queue_T* draw_queues[NUMBER_OF_DRAW_QUEUES];
 } Scene_T;
 
-void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_e type, AssetRedrawCallback_T redraw, AssetDrawCallback_T draw);
 Scene_T* Assets_SetupScene(void);
+void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_e type, AssetRedrawCallback_T redraw, AssetDrawCallback_T draw);
+
 void Assets_Draw(const char* name, Scene_T* scene, AssetDraw_Opts_T opts);
 bool Assets_PromptRedraw(Scene_T* scene, clock_t ms);
-void Assets_Load(const char* fname, AssetType_e type, Scene_T* scene);
+
 void Assets_FlipDrawQueue(Scene_T* scene);
 void Assets_ClearDrawQueue(Scene_T* scene);
 

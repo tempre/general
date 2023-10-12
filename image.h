@@ -11,8 +11,6 @@ typedef struct {
     uchar* pixel_map;
 } Image_T;
 
-Image_T* Assets_LoadImage(Scene_T* scene, const char* fname);
-void Assets_DrawImage(void* opt);
-bool Assets_RedrawImage(clock_t ms, void* opts);
+Image_T* Assets_LoadImage(const char* fname, Scene_T* scene);
 
 #endif // IMAGE_H_

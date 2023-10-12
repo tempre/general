@@ -271,13 +271,13 @@ static void opengl_loop(void)
     static CharmapDraw_Opts_T cm_opts = { .draw_trimmed = false, .text = "B"};
 
     Assets_Draw(ASSET_KIKI_PNG, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 200});
-    Assets_Draw(ASSET_CAT_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 500, .extra = &speeds[0u]});
+    Assets_Draw(ASSET_TEST_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 500, .extra = &speeds[0u]});
 
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 500, .extra = &speeds[0u]});
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 500, .extra = &speeds[1u]});
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200, .extra = &speeds[2u]});
-    Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 200, .extra = &speeds[3u]});
-    Assets_Draw(CHARMAP_DEFAULT, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 950, .off_y = 200, .extra = &cm_opts});
+    /* Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 500, .extra = &speeds[0u]}); */
+    /* Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 500, .extra = &speeds[1u]}); */
+    /* Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 100, .off_y = 200, .extra = &speeds[2u]}); */
+    /* Assets_Draw(ASSET_GIPHY_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 501, .off_y = 200, .extra = &speeds[3u]}); */
+    /* Assets_Draw(CHARMAP_DEFAULT, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 950, .off_y = 200, .extra = &cm_opts}); */
 
     glutSwapBuffers();
     glFlush();
@@ -324,11 +324,11 @@ static void opengl_init(int argc, char** argv)
 {
     GL_Window.scene = Assets_SetupScene();
 
-    Assets_Load(ASSET_CAT_GIF, ASSET_GIF, GL_Window.scene);
-    Assets_Load(ASSET_GIPHY_GIF, ASSET_GIF, GL_Window.scene);
-    Assets_Load(ASSET_PENG_GIF, ASSET_GIF, GL_Window.scene);
-    Assets_Load(ASSET_KIKI_PNG, ASSET_IMAGE, GL_Window.scene);
-    Charmap_Load(CHARMAP_DEFAULT, 32u, 3u, 32u, GL_Window.scene);
+    (void)Assets_LoadGIF(ASSET_TEST_GIF, GL_Window.scene);
+    (void)Assets_LoadGIF(ASSET_GIPHY_GIF, GL_Window.scene);
+    (void)Assets_LoadGIF(ASSET_PENG_GIF, GL_Window.scene);
+    (void)Assets_LoadImage(ASSET_KIKI_PNG, GL_Window.scene);
+    (void)Assets_LoadCharmap(CHARMAP_DEFAULT, 32u, 3u, 32u, GL_Window.scene);
 
     GL_Window.start_time = clock();
 

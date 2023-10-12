@@ -26,6 +26,6 @@ typedef struct {
     const char* text; /* negative number draws whole charmap */
 } CharmapDraw_Opts_T;
 
-void Charmap_Load(const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row, Scene_T* scene);
+void Assets_LoadCharmap(const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row, Scene_T* scene);
 
 #endif // CHARMAP_H_

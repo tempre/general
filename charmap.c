@@ -176,7 +176,7 @@ static void charmap_draw(void* opt)
     }
 }
 
-void Charmap_Load(const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row, Scene_T* scene)
+void Assets_LoadCharmap(const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_row, Scene_T* scene)
 {
     Charmap_T* charmap = malloc(sizeof(Charmap_T));
     charmap->start_ascii = start_ascii;
@@ -184,7 +184,7 @@ void Charmap_Load(const char* fname, U8 start_ascii, U8 max_rows, U8 glyphs_per_
     charmap->max_rows = max_rows;
 
     /* this doesn't really matter, sine this will not draw a cropped image. However this could be useful in just loading the asset for use. */
-    charmap->img = Assets_LoadImage(scene, fname);
+    charmap->img = Assets_LoadImage(fname, scene);
 
     charmap->glyph_w = (charmap->img->width / charmap->glyphs_per_row);
     charmap->glyph_h = (charmap->img->height / charmap->max_rows);
