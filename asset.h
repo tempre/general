@@ -10,7 +10,7 @@
 #define ASSET_KIKI_PNG         "kiki.png"
 #define ASSET_PENG_GIF         "peng.gif"
 
-#define DRAW_QUEUE_SIZE 2u
+#define NUMBER_OF_DRAW_QUEUES 2u
 
 typedef enum {
     ASSET_IMAGE,
@@ -58,7 +58,7 @@ typedef struct {
   HashTable_T* table;
 
   U8 current_draw_queue;
-  Queue_T* draw_queues[DRAW_QUEUE_SIZE];
+  Queue_T* draw_queues[NUMBER_OF_DRAW_QUEUES];
 } Scene_T;
 
 void Assets_AddToScene(Scene_T* scene, void* asset, const char* name, AssetType_e type, AssetRedrawCallback_T redraw, AssetDrawCallback_T draw);

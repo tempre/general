@@ -268,7 +268,7 @@ static void opengl_loop(void)
     Assets_ClearDrawQueue(GL_Window.scene);
 
     static uint16_t speeds[] = {GIF_PLAYBACK_SPD_1X, GIF_PLAYBACK_SPD_3X, GIF_PLAYBACK_SPD_HALF, GIF_PLAYBACK_SPD_EIGHTH};
-    static CharmapDraw_Opts_T cm_opts = { .draw_trimmed = false, .draw_all = false, .text = NULL, .c = 'B'};
+    static CharmapDraw_Opts_T cm_opts = { .draw_trimmed = false, .text = "B"};
 
     Assets_Draw(ASSET_KIKI_PNG, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 200});
     Assets_Draw(ASSET_CAT_GIF, GL_Window.scene, (AssetDraw_Opts_T){ .off_x = 900, .off_y = 500, .extra = &speeds[0u]});

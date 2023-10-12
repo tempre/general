@@ -166,20 +166,13 @@ static void charmap_draw(void* opt)
     AssetDraw_T* draw = (AssetDraw_T*)opt;
     CharmapDraw_Opts_T* cm_opts = (CharmapDraw_Opts_T*)draw->options.extra;
 
-    if(cm_opts->draw_all)
+    if(cm_opts->text[0u] < 0u)
     {
         draw_full_charmap(draw);
     }
     else
     {
-        if(!cm_opts->text)
-        {
-            draw_char(draw, cm_opts->c);
-        }
-        else
-        {
-            draw_string(draw);
-        }
+        draw_string(draw);
     }
 }
 
